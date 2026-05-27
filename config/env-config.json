@@ -13,7 +13,7 @@
         "loginRequired": true,
         "cookieDomain": "bssv9-stg.smartfren.com",
         "credentials": {
-          "username": "请替换为实际用户名",
+          "username": "s0027029233",
           "passwordEnvVar": "PORTAL_PASSWORD_UAT",
           "organization": "Default Organization(Please modify)",
           "job": "CASH_CSR"
@@ -33,7 +33,7 @@
         "loginRequired": true,
         "cookieDomain": "10.16.180.44",
         "credentials": {
-          "username": "请替换为实际用户名",
+          "username": "s0027029233",
           "passwordEnvVar": "PORTAL_PASSWORD_TB",
           "organization": "Default Organization(Please modify)",
           "job": "CASH_CSR"
@@ -73,7 +73,7 @@
         "loginRequired": true,
         "cookieDomain": "bssv9-uat.smartfren.com",
         "credentials": {
-          "username": "请替换为实际用户名",
+          "username": "s0027029233",
           "passwordEnvVar": "PORTAL_PASSWORD_XLS_DRYRUN",
           "organization": "Default Organization(Please modify)",
           "job": "CASH_CSR"

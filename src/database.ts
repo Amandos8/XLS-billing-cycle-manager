@@ -55,12 +55,20 @@ export async function createPool(config: OracleConfig): Promise<void> {
       user: config.user,
       password: password,
       connectString: `${config.host}:${config.port}/${config.service}`,
-      poolMin: 1,    // 连接池最小连接数（空闲时保留1个连接）
-      poolMax: 4,    // 连接池最大连接数（最多同时4个连接，足够用了）
-      poolIncrement: 1, // 每次需要扩容时增加1个连接
+      poolMin: 1,
+      poolMax: 4,
+      poolIncrement: 1,
     });
 
-    logger.success('Oracle数据库连接池创建成功');
+    // 强制设置当前Schema为CPC，避免其他平台环境变量覆盖默认Schema
+    const initConn = await pool.getConnection();
+    try {
+      await initConn.execute('ALTER SESSION SET CURRENT_SCHEMA = CPC');
+    } finally {
+      await initConn.close();
+    }
+
+    logger.success(`Oracle数据库连接池创建成功 (Schema: CPC)`);
   } catch (err) {
     logger.error('Oracle数据库连接失败，请检查：', err);
     logger.info('  1. Oracle Instant Client是否正确安装');
@@ -120,7 +128,7 @@ async function execute(
 export async function queryBillingCycle(billingCycleId: string): Promise<BillingCycle | null> {
   logger.info(`正在查询账期: BILLING_CYCLE_ID = ${billingCycleId}`);
 
-  const sql = `SELECT * FROM CBEC_BILLING_CYCLE WHERE BILLING_CYCLE_ID = :billingCycleId`;
+  const sql = `SELECT * FROM CPC.CBEC_BILLING_CYCLE WHERE BILLING_CYCLE_ID = :billingCycleId`;
   const result = await execute(sql, { billingCycleId });
 
   // result.rows 是查询返回的行数组，如果长度为0说明没有这个账期
@@ -155,7 +163,7 @@ export async function updateBillingCycleState(
   const startTime = Date.now();
 
   // 执行UPDATE —— autoCommit: true 确保立即生效（与查询使用同一连接,避免事务丢失）
-  const sql = `UPDATE CBEC_BILLING_CYCLE SET STATE = :newState WHERE BILLING_CYCLE_ID = :billingCycleId`;
+  const sql = `UPDATE CPC.CBEC_BILLING_CYCLE SET STATE = :newState WHERE BILLING_CYCLE_ID = :billingCycleId`;
   const result = await execute(sql, { newState, billingCycleId }, true);
 
   const elapsed = Date.now() - startTime;
@@ -196,7 +204,7 @@ export async function rollbackBillingCycle(
   logger.warn(`⚠️  正在回滚数据库: 将账期 ${billingCycleId} 恢复为 STATE='${originalState}'`);
 
   // autoCommit: true 确保回滚立即生效
-  const sql = `UPDATE CBEC_BILLING_CYCLE SET STATE = :state WHERE BILLING_CYCLE_ID = :id`;
+  const sql = `UPDATE CPC.CBEC_BILLING_CYCLE SET STATE = :state WHERE BILLING_CYCLE_ID = :id`;
   await execute(sql, { state: originalState, id: billingCycleId }, true);
 
   logger.success('数据库回滚完成');
