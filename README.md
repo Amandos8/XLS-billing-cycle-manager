@@ -15,13 +15,13 @@ npm run build
 cp .env.example .env
 # 编辑 .env，将占位符替换为实际密码
 
-# 4. 在 Claude Code 中直接说：
+# 4. 在对话框中直接说：
 #    "开XLS_REGRESSION的账期20041"
 ```
 
 ## 使用方式
 
-直接用自然语言告诉 Claude 你要做什么，Skill 会自动解析参数并执行完整流程。
+直接用自然语言告诉 Agent 你要做什么，Skill 会自动解析参数并执行完整流程。
 
 ### 交互示例
 

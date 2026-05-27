@@ -360,17 +360,29 @@ async function executeStep(step: GuiStep): Promise<StepResult> {
         const loaders = [
           '.loading-mask',
           '.modal-backdrop',
-          '[class*="loading"]',
           'div.blockUI',
         ];
+        let anyLoaderVisible = false;
         for (const loader of loaders) {
           try {
-            await currentPage.waitForSelector(loader, { state: 'hidden', timeout });
+            const el = await currentPage.waitForSelector(loader, { state: 'visible', timeout: 3000 });
+            if (el) anyLoaderVisible = true;
           } catch {
-            // 选择器不存在，继续下一个
+            // 选择器3秒内未出现，说明没有该loading元素，继续下一个
           }
         }
-        await sleep(2000);
+        if (anyLoaderVisible) {
+          for (const loader of loaders) {
+            try {
+              await currentPage.waitForSelector(loader, { state: 'hidden', timeout });
+            } catch {
+              // 选择器不存在或超时，继续下一个
+            }
+          }
+          await sleep(2000);
+        } else {
+          logger.info('  未检测到loading元素，直接继续');
+        }
         logger.success(`  [完成] ${step.description}`);
         break;
 
