@@ -1,0 +1,32 @@
+# =============================================================================
+# .gitignore — Git版本控制忽略文件列表
+# =============================================================================
+
+# 依赖包目录（通过 npm install 重新安装）
+node_modules/
+
+# TypeScript编译输出目录（通过 npm run build 重新生成）
+dist/
+
+# 【重要】环境变量文件（包含数据库密码，绝对不能提交！）
+.env
+
+# Chrome调试模式用户数据目录（运行时生成）
+.chrome-profile/
+
+# 错误截图目录（运行时生成）
+screenshots/
+
+# UI录制脚本和结果（调试用，保留在本地）
+scripts/record-ui.ts
+scripts/record-result.json
+
+# 操作系统生成的文件
+.DS_Store
+Thumbs.db
+
+# IDE配置文件
+.vscode/
+.idea/
+*.swp
+*.swo

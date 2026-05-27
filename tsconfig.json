@@ -1,0 +1,34 @@
+{
+  "compilerOptions": {
+    /* ===== 编译目标设置 ===== */
+    "target": "ES2022",
+    "module": "commonjs",
+    "lib": ["ES2022"],
+
+    /* ===== 输出设置 ===== */
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+
+    /* ===== 严格模式 ===== */
+    "strict": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+
+    /* ===== 模块解析 ===== */
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+
+    /* ===== 其他 ===== */
+    "skipLibCheck": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "tests"]
+}

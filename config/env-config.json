@@ -1,0 +1,84 @@
+{
+  "environments": {
+    "UAT": {
+      "oracle": {
+        "host": "10.16.180.39",
+        "port": 11521,
+        "service": "cc01_uat",
+        "user": "cpc",
+        "passwordEnvVar": "ORACLE_PASSWORD_UAT"
+      },
+      "portal": {
+        "url": "https://bssv9-stg.smartfren.com/portal-web/",
+        "loginRequired": true,
+        "cookieDomain": "bssv9-stg.smartfren.com",
+        "credentials": {
+          "username": "请替换为实际用户名",
+          "passwordEnvVar": "PORTAL_PASSWORD_UAT",
+          "organization": "Default Organization(Please modify)",
+          "job": "CASH_CSR"
+        }
+      }
+    },
+    "TB": {
+      "oracle": {
+        "host": "10.16.180.38",
+        "port": 11521,
+        "service": "cc01_tb",
+        "user": "cpc",
+        "passwordEnvVar": "ORACLE_PASSWORD_TB"
+      },
+      "portal": {
+        "url": "http://10.16.180.44:443/portal-web/",
+        "loginRequired": true,
+        "cookieDomain": "10.16.180.44",
+        "credentials": {
+          "username": "请替换为实际用户名",
+          "passwordEnvVar": "PORTAL_PASSWORD_TB",
+          "organization": "Default Organization(Please modify)",
+          "job": "CASH_CSR"
+        }
+      }
+    },
+    "XLS_REGRESSION": {
+      "oracle": {
+        "host": "10.16.180.20",
+        "port": 11522,
+        "service": "ccrb01",
+        "user": "cpc",
+        "passwordEnvVar": "ORACLE_PASSWORD_XLS_REGRESSION"
+      },
+      "portal": {
+        "url": "https://10.16.180.15/portal-web/",
+        "loginRequired": true,
+        "cookieDomain": "10.16.180.15",
+        "credentials": {
+          "username": "s0027029233",
+          "passwordEnvVar": "PORTAL_PASSWORD_XLS_REGRESSION",
+          "organization": "Default Organization(Please modify)",
+          "job": "CASH_CSR"
+        }
+      }
+    },
+    "XLS_DRYRUN": {
+      "oracle": {
+        "host": "10.16.180.55",
+        "port": 11521,
+        "service": "ccrb01",
+        "user": "cpc",
+        "passwordEnvVar": "ORACLE_PASSWORD_XLS_DRYRUN"
+      },
+      "portal": {
+        "url": "https://bssv9-uat.smartfren.com/portal-web/",
+        "loginRequired": true,
+        "cookieDomain": "bssv9-uat.smartfren.com",
+        "credentials": {
+          "username": "请替换为实际用户名",
+          "passwordEnvVar": "PORTAL_PASSWORD_XLS_DRYRUN",
+          "organization": "Default Organization(Please modify)",
+          "job": "CASH_CSR"
+        }
+      }
+    }
+  }
+}

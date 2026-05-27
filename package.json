@@ -1,0 +1,28 @@
+{
+  "name": "billing-cycle-manager",
+  "version": "1.0.0",
+  "description": "账期开关助手 - 自动化执行Oracle数据库操作和网页GUI操作的账期开关工作流",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "test": "ts-node tests/example.ts"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.0",
+    "oracledb": "^6.5.0",
+    "playwright": "^1.45.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/oracledb": "^6.10.4",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.5.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}
