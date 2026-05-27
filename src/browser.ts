@@ -36,6 +36,9 @@ const CHROME_PATH = 'C:/Program Files/Google/Chrome/Application/chrome.exe';
 /** 当前操作的页面对象 */
 let currentPage: Page | null = null;
 
+/** 是否由本程序启动了独立Chrome实例 */
+let launchedByUs = false;
+
 /** 截图保存目录 */
 const SCREENSHOT_DIR = path.resolve(__dirname, '..', 'screenshots');
 
@@ -61,38 +64,16 @@ async function isCdpAvailable(): Promise<boolean> {
 }
 
 /**
- * 杀死所有chrome.exe进程
- */
-function killAllChrome(): void {
-  try {
-    execSync('taskkill /F /IM chrome.exe /T 2>nul', { stdio: 'ignore' });
-    logger.info('已清理残留Chrome进程');
-  } catch {
-    // 没有Chrome进程在运行，忽略错误
-  }
-}
-
-/**
- * 启动Chrome调试模式（独立用户目录）
- *
- * 使用独立用户目录的好处：
- * 1. 不影响用户日常使用的Chrome窗口
- * 2. Cookie/登录状态独立存储，下次可复用
- * 3. 关闭后干净退出，不留后台进程
+ * 启动Chrome调试模式（独立用户目录，不影响用户日常Chrome）
  */
 function launchChrome(): void {
   logger.info('正在启动Chrome调试模式（独立用户目录）...');
+  launchedByUs = true;
 
-  // 确保用户目录存在
   if (!fs.existsSync(CHROME_PROFILE_DIR)) {
     fs.mkdirSync(CHROME_PROFILE_DIR, { recursive: true });
   }
 
-  // 启动Chrome:
-  // --remote-debugging-port=9222  开启CDP调试端口
-  // --user-data-dir=...           使用独立用户目录
-  // --no-first-run                跳过首次运行向导
-  // --no-default-browser-check    不检查默认浏览器
   const cmd = `start "" "${CHROME_PATH}" --remote-debugging-port=${CDP_PORT} --user-data-dir="${CHROME_PROFILE_DIR}" --no-first-run --no-default-browser-check --ignore-certificate-errors`;
   execSync(cmd, { stdio: 'ignore' });
 
@@ -101,16 +82,13 @@ function launchChrome(): void {
 
 /**
  * 确保Chrome CDP可用
- * 先检测已有端口，没有则自动启动
+ * 直接启动独立Chrome实例，不杀用户日常Chrome
  */
 async function ensureCdpReady(): Promise<void> {
   if (await isCdpAvailable()) {
-    return; // 已有CDP端口在运行，直接用
+    return;
   }
 
-  // 杀掉残留进程，启动新的Chrome
-  killAllChrome();
-  await sleep(2000);
   launchChrome();
 
   // 等待CDP端口就绪（最多等30秒）
@@ -653,7 +631,9 @@ export async function executeFullGuiWorkflow(): Promise<{ success: boolean; deta
 }
 
 /**
- * 关闭浏览器连接
+ * 关闭浏览器连接，并关闭由本程序启动的Chrome实例
+ *
+ * 只关闭使用独立user-data-dir的Chrome进程，不影响用户日常Chrome。
  */
 export async function closeBrowser(): Promise<void> {
   if (currentPage) {
@@ -667,6 +647,20 @@ export async function closeBrowser(): Promise<void> {
     }
     currentPage = null;
     logger.info('浏览器连接已断开');
+  }
+
+  // 关闭由本程序启动的独立Chrome实例（通过user-data-dir精确匹配，不影响用户日常Chrome）
+  if (launchedByUs) {
+    try {
+      execSync(
+        `wmic process where "name='chrome.exe' and commandline like '%chrome-profile%'" call terminate 2>nul`,
+        { stdio: 'ignore' }
+      );
+      logger.info('已关闭独立Chrome实例');
+    } catch {
+      // Chrome可能已手动关闭
+    }
+    launchedByUs = false;
   }
 }
 
