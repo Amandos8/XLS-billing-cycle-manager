@@ -661,6 +661,18 @@ export async function closeBrowser(): Promise<void> {
       // Chrome可能已手动关闭
     }
     launchedByUs = false;
+
+    // 清理Chrome用户数据目录，避免长期累积占用磁盘（下次启动时自动重建）
+    try {
+      if (fs.existsSync(CHROME_PROFILE_DIR)) {
+        // 等待Chrome进程完全退出释放文件锁
+        await sleep(2000);
+        fs.rmSync(CHROME_PROFILE_DIR, { recursive: true, force: true });
+        logger.info('已清理Chrome用户数据目录');
+      }
+    } catch {
+      logger.warn('清理Chrome用户数据目录失败，可手动删除: ' + CHROME_PROFILE_DIR);
+    }
   }
 }
 
