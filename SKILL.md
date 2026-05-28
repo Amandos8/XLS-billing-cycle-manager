@@ -20,6 +20,38 @@ triggers:
 
 ---
 
+## Agent执行纪律（CRITICAL — 必须严格遵守）
+
+**本Skill的所有操作必须通过运行项目代码完成，Agent不得自行执行任何操作。**
+
+### 绝对禁止事项
+
+1. **禁止自行执行SQL** — Agent不得使用任何工具（包括但不限于Bash、数据库客户端、其他平台的数据操作能力）直接执行SELECT/UPDATE/INSERT/DELETE语句。所有数据库操作必须通过运行 `npx ts-node src/index.ts --env <环境> --id <账期ID> --action <开/关>` 由代码完成。代码内部已实现：Schema隔离（`ALTER SESSION SET CURRENT_SCHEMA = CPC`）、绑定变量防注入、事务提交、失败回滚。Agent自行执行SQL会导致：连错数据库、操作错误Schema、遗漏回滚、数据不一致。
+
+2. **禁止要求用户手动启动Chrome** — 代码已实现自动启动Chrome调试模式（独立user-data-dir，不影响用户日常Chrome）。Agent不得输出"请手动执行 chrome.exe --remote-debugging-port=9222"或任何类似提示。如果Chrome启动失败，应排查代码报错原因并修复代码，而非绕过代码让用户手动操作。
+
+3. **禁止绕过代码逻辑自行操作浏览器** — Agent不得使用Playwright、Puppeteer或其他浏览器自动化工具直接操作Portal页面。所有GUI操作必须通过运行项目代码完成。代码已实现：自动登录、Job选择、Data Refresh全流程、失败重试、截图记录。
+
+4. **禁止跳过或修改工作流步骤** — Agent不得因为"这一步看起来不需要"而跳过任何步骤，也不得自行决定"先做GUI再做数据库"等与代码逻辑不同的执行顺序。代码的工作流顺序（数据库先行 → GUI后续 → 失败回滚）是保证数据一致性的关键。
+
+### 正确执行方式
+
+```
+正确：npx ts-node src/index.ts --env UAT --id 202501 --action 开
+错误：sqlplus cpc/password@host:port/service "UPDATE CBEC_BILLING_CYCLE SET STATE='A'..."
+错误：请手动打开Chrome调试模式
+错误：用Playwright直接打开Portal操作
+错误：这一步不需要，我直接跳过
+```
+
+### 异常处理原则
+
+- 代码运行出错 → 阅读错误日志，修复代码中的bug，重新运行代码
+- 配置缺失 → 引导用户修改配置文件或环境变量，然后重新运行代码
+- 任何情况下都不得用"手动操作"替代代码执行
+
+---
+
 ## 输入契约（Input Contract）
 
 ### 必填参数
@@ -114,10 +146,11 @@ Skill内部按以下顺序自动执行：
       └→ COMMIT提交
 
 阶段4: GUI操作（Playwright + Chrome CDP）
-  ├→ 检测Chrome调试端口（localhost:9222）
-  │   └→ 未检测到 → 提示用户启动Chrome调试模式
-  ├→ 检查登录状态
-  │   └→ 未登录 → 提示用户登录后回复"继续"
+  ├→ 自动检测Chrome调试端口（localhost:9222）
+  │   └→ 未检测到 → 代码自动启动独立Chrome实例（--user-data-dir隔离，不影响用户日常Chrome）
+  ├→ 自动登录Portal（从env-config.json读取凭据，密码从环境变量获取）
+  │   └→ 登录失败 → 代码输出提示，Agent应引导用户检查凭据配置而非要求手动操作
+  ├→ 自动选择Job（匹配Organization + Role后双击）
   ├→ 第一轮Data Refresh（INVOICING CENTER）
   │   ├→ 打开菜单 → 搜索"data refresh" → 点击菜单项
   │   ├→ 点击Refresh → 确认对话框 → 等待loading
@@ -142,10 +175,10 @@ Skill内部按以下顺序自动执行：
 | Node.js 版本不满足 | 提示升级到 >= 18，终止执行 |
 | npm 依赖未安装 | 自动执行 `npm install`（约 300MB），安装完成后继续 |
 | Oracle oci.dll 检测 | 未找到则自动降级为 Thin Mode，零安装、零等待 |
-| Chrome 浏览器未安装 | 提示用户安装 Google Chrome，终止执行 |
+| Chrome 浏览器未安装 | 提示用户安装 Google Chrome，终止执行。Agent不得要求用户手动启动Chrome调试模式 |
 | 参数验证失败 | 提示用户补充/修正参数，不执行任何操作 |
 | 配置文件错误 | 提示检查 config/env-config.json |
-| 数据库连接失败 | 提示检查网络、Oracle Instant Client、密码 |
+| 数据库连接失败 | 提示检查网络、Oracle Instant Client、密码。Agent不得自行执行SQL |
 | 账期不存在 | 提示用户重新输入账期ID |
 | GUI单步失败 | 自动重试当前步骤（最多3次） |
 | GUI超过3次重试 | **自动回滚数据库**（恢复为操作前的状态），保存截图 |
@@ -387,8 +420,9 @@ npm install ./billing-cycle-manager-1.0.0.tgz
 ## 注意事项
 
 1. **密码安全**：密码必须通过环境变量传入，不能硬编码在代码或配置文件中
-2. **Chrome调试模式**：每次使用前需手动启动 `chrome.exe --remote-debugging-port=9222`
-3. **Portal登录**：首次使用需在Chrome中手动登录目标环境的Portal
+2. **Chrome自动管理**：代码自动启动独立Chrome实例（使用独立user-data-dir），无需用户手动启动调试模式；流程结束后自动关闭该实例，不影响用户日常Chrome
+3. **Portal自动登录**：代码自动填写登录表单并登录，如登录失败应检查env-config.json中的credentials配置和.env中的密码
 4. **选择器适配**：`browser.ts` 中的CSS选择器是通用写法，如果Portal页面改版，可能需要更新选择器
 5. **网络要求**：需要能同时连通Oracle数据库服务器和Portal网站
 6. **回滚保证**：如果数据库更新成功但GUI操作失败，会自动回滚数据库
+7. **Schema隔离**：代码已强制设置 `CURRENT_SCHEMA = CPC` 并在SQL中使用 `CPC.` 前缀，确保不会误操作其他Schema
